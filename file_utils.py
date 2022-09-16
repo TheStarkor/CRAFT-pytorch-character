@@ -46,30 +46,34 @@ def saveResult(img_file, img, boxes, dirname='./result/', verticals=None, texts=
         filename, file_ext = os.path.splitext(os.path.basename(img_file))
 
         # result directory
-        res_file = dirname + "res_" + filename + '.txt'
         res_img_file = dirname + "res_" + filename + '.jpg'
+        res_crop_file = dirname + "res_" + filename + '_crop.jpg'
 
         if not os.path.isdir(dirname):
             os.mkdir(dirname)
 
-        with open(res_file, 'w') as f:
-            for i, box in enumerate(boxes):
-                poly = np.array(box).astype(np.int32).reshape((-1))
-                strResult = ','.join([str(p) for p in poly]) + '\r\n'
-                f.write(strResult)
+        for i, box in enumerate(boxes):
+            poly = np.array(box).astype(np.int32).reshape((-1))
+            poly = poly.reshape(-1, 2)
 
-                poly = poly.reshape(-1, 2)
+            # print(poly.reshape((-1, 1, 2)).shape)
+            res_crop_file = dirname + "res_" + filename + f'_crop_{i}.jpg'
+            start, _, end, _ = poly.reshape((-1, 1, 2))
+            output = img[start[0][1]:end[0][1], start[0][0]:end[0][0]]
+
+            try:
+                cv2.imwrite(res_crop_file, output)
+                
                 cv2.polylines(img, [poly.reshape((-1, 1, 2))], True, color=(0, 0, 255), thickness=2)
-                ptColor = (0, 255, 255)
-                if verticals is not None:
-                    if verticals[i]:
-                        ptColor = (255, 0, 0)
 
                 if texts is not None:
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     font_scale = 0.5
                     cv2.putText(img, "{}".format(texts[i]), (poly[0][0]+1, poly[0][1]+1), font, font_scale, (0, 0, 0), thickness=1)
                     cv2.putText(img, "{}".format(texts[i]), tuple(poly[0]), font, font_scale, (0, 255, 255), thickness=1)
+            except:
+                print(output)
+                print("empty")
 
         # Save result image
         cv2.imwrite(res_img_file, img)

@@ -4,3 +4,6 @@
 *.pth
 result*
 weights*
+test*
+./__pycache__/
+.DS_Store
